@@ -1,0 +1,61 @@
+# spec.example.yaml — the single input to the CLI
+
+feature: Download invoice as PDF
+
+# Behavior, Gherkin-style. Each scenario has an id so changes can point to it.
+intent:
+  - id: download-invoice
+    given: the user is on the billing page
+    when: they click "Download" on an invoice
+    then: the invoice PDF downloads
+
+  - id: download-fails
+    given: the invoice service is down
+    when: they click "Download"
+    then: they see an error toast and can retry
+
+# Constraints the verifier checks against.
+acceptance:
+  - The button shows a loading state while downloading
+  - The file is named invoice-<number>.pdf
+
+# Data contracts between modules.
+types:
+  # define: created here
+  - name: Invoice
+    at: src/gateways/billing
+    shape: { id: string, number: string, pdfUrl?: string }
+
+  # reference: already exists
+  - name: User
+    from: "@acme/contracts"
+
+  # reference + expectation: must structurally satisfy this shape
+  - name: Customer
+    from: src/gateways/crm
+    expects: { id: string, email: string }
+
+# Pieces and connections. New modules are inferred when the path doesn't exist.
+modules:
+  - path: src/lib/pdf
+    dependencies: [pdf-lib]                 # npm deps only enter through lib/
+    changes:
+      - add: mergePdfs
+        signature: "(files: Blob[]) => Promise<Blob>"
+        for: [download-invoice]
+
+  - path: src/gateways/billing
+    changes:
+      - add: useDownloadInvoice
+        signature: "(invoiceId: string) => Mutation<Blob>"
+        endpoint: GET /invoices/:id/pdf -> Blob
+        for: [download-invoice, download-fails]
+
+      - remove: useLegacyInvoiceLink
+
+  - path: src/features/invoice-list
+    uses: [src/gateways/billing, src/lib/pdf]
+    changes:
+      - modify: InvoiceList.Row
+        notes: add a Download action with loading and error states
+        for: [download-invoice, download-fails]
