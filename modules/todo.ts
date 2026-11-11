@@ -9,6 +9,7 @@ export type Task = {
   description: string;
   domain: Domain;
   for: string[]; // ids of the spec scenarios this task serves
+  dependsOn: string[]; // tasks that have to be done first, the rest can run at the same time
   intent: Intent; // scenarios specific to this task, written when it is groomed
   isGroomed: boolean;
   isDone: boolean;
@@ -42,7 +43,7 @@ export class Todo {
 
   constructor(private rules: Rules) {}
 
-  public addTask(task: Pick<Task, "id" | "description" | "domain" | "for">): void {
+  public addTask(task: Pick<Task, "id" | "description" | "domain" | "for"> & { dependsOn?: string[] }): void {
     if (this.getTask(task.id)) throw new ToolError(`a task with id ${task.id} already exists`);
     if (!this.rules.isKnownDomain(task.domain)) {
       throw new ToolError(`domain ${task.domain} does not exist and is not a module in the spec`);
@@ -50,7 +51,12 @@ export class Todo {
     const unknown = task.for.filter((id) => !this.rules.scenarioIds.has(id));
     if (unknown.length > 0) throw new ToolError(`unknown scenarios in for: ${unknown.join(", ")}`);
 
-    this.tasks.push({ ...task, intent: [], isGroomed: false, isDone: false, review: null, qa: null });
+    // a dependency has to exist already, so the tasks can never form a cycle
+    const dependsOn = task.dependsOn ?? [];
+    const missing = dependsOn.filter((id) => !this.getTask(id));
+    if (missing.length > 0) throw new ToolError(`unknown tasks in dependsOn, add them first: ${missing.join(", ")}`);
+
+    this.tasks.push({ ...task, dependsOn, intent: [], isGroomed: false, isDone: false, review: null, qa: null });
   }
 
   public getTask(id: string): Task | undefined {
@@ -119,8 +125,14 @@ export class Todo {
     return [
       defineTool({
         name: "addTask",
-        description: "add a task: one atomic change contained in one domain (directory)",
-        input: z.object({ id: z.string(), description: z.string(), domain: z.string(), for: z.array(z.string()).min(1) }),
+        description: "add a task: one atomic change contained in one domain (directory). dependsOn lists the tasks whose result it needs, they have to be added before it",
+        input: z.object({
+          id: z.string(),
+          description: z.string(),
+          domain: z.string(),
+          for: z.array(z.string()).min(1),
+          dependsOn: z.array(z.string()).optional(),
+        }),
         run: (input) => this.addTask(input),
       }),
       defineTool({

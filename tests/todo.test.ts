@@ -13,6 +13,15 @@ function todo(): Todo {
 const task = { id: "t1", description: "add mergePdfs", domain: "src/lib/pdf", for: ["download-invoice"] };
 
 describe("tasks", () => {
+  test("a dependency has to be added before the task that needs it", () => {
+    const list = todo();
+    expect(() => list.addTask({ ...task, dependsOn: ["t2"] })).toThrow(ToolError);
+    list.addTask({ ...task, id: "t2" });
+    list.addTask({ ...task, dependsOn: ["t2"] });
+    expect(list.getTask("t1")?.dependsOn).toEqual(["t2"]);
+    expect(list.getTask("t2")?.dependsOn).toEqual([]);
+  });
+
   test("a new task starts not groomed and not done", () => {
     const list = todo();
     list.addTask(task);

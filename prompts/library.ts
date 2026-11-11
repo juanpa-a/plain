@@ -10,6 +10,10 @@ import categorizer from "./roles/categorizer.md" with { type: "text" };
 import implementor from "./roles/implementor.md" with { type: "text" };
 import reviewer from "./roles/reviewer.md" with { type: "text" };
 import verifier from "./roles/verifier.md" with { type: "text" };
+import polisher from "./roles/polisher.md" with { type: "text" };
+import qualityReviewer from "./roles/quality-reviewer.md" with { type: "text" };
+import performanceReviewer from "./roles/performance-reviewer.md" with { type: "text" };
+import qa from "./roles/qa.md" with { type: "text" };
 
 import { PROMPTS_OVERRIDES_DIR } from "../constants";
 
@@ -24,7 +28,15 @@ export type StepName =
   | "REVIEW"
   | "RECATEGORIZE_FEEDBACK";
 export type RoleName =
-  "arquitect" | "categorizer" | "implementor" | "reviewer" | "verifier";
+  | "arquitect"
+  | "categorizer"
+  | "implementor"
+  | "reviewer"
+  | "verifier"
+  | "polisher"
+  | "qualityReviewer"
+  | "performanceReviewer"
+  | "qa";
 export type SharedName = "taskVsIssueVsBlocker" | "outputFormat";
 
 // the user can override any core prompt in PROMPTS_OVERRIDES_DIR/<category>/<file>.md
@@ -49,6 +61,10 @@ export const roles: Record<RoleName, string> = {
   implementor: await withOverride("roles/implementor.md", implementor),
   reviewer: await withOverride("roles/reviewer.md", reviewer),
   verifier: await withOverride("roles/verifier.md", verifier),
+  polisher: await withOverride("roles/polisher.md", polisher),
+  qualityReviewer: await withOverride("roles/quality-reviewer.md", qualityReviewer),
+  performanceReviewer: await withOverride("roles/performance-reviewer.md", performanceReviewer),
+  qa: await withOverride("roles/qa.md", qa),
 };
 
 export const shared: Record<SharedName, string> = {

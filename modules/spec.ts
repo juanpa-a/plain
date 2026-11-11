@@ -63,6 +63,11 @@ type Check = (spec: Spec, repo: Repo) => string[];
 
 const CHECKS: Check[] = [modulesExist, methodsExist, noCollisions, typesResolve, shapesSatisfied, scenariosLinked];
 
+// the shape of a spec as json schema, what `plain schema` prints
+export function specJsonSchema(): unknown {
+  return z.toJSONSchema(SpecSchema);
+}
+
 export class Specs {
   public async load(path: string): Promise<Spec> {
     let raw: unknown;
