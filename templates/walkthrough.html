@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plain walkthrough</title>
+<style>
+  :root {
+    --bg: #faf9f6; --card: #ffffff; --text: #1f1e1c; --muted: #6b6a65; --line: #dedcd3;
+    --accent: #3b5bdb; --accent-bg: #edf1ff; --add: #e3f5e6; --add-text: #17542a; --del: #fde8e6; --del-text: #8a1f17;
+    --code-bg: #f3f2ec; --mark: #e03131;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #191918; --card: #232321; --text: #ecebe6; --muted: #a3a29b; --line: #3a3936;
+      --accent: #91a7ff; --accent-bg: #272c45; --add: #1c3524; --add-text: #a8e0b5; --del: #45211e; --del-text: #f5b5ae;
+      --code-bg: #1e1e1c; --mark: #ff6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 96px; }
+  h1 { font-size: 26px; line-height: 1.25; margin: 0 0 8px; font-weight: 600; }
+  h2 { font-size: 17px; margin: 0; font-weight: 600; }
+  h3 { font-size: 16px; margin: 0 0 6px; font-weight: 600; }
+  p { margin: 0 0 12px; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+  .meta code, .file { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 28px 0 12px; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .ghost { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; font-size: 14px; }
+  .ghost:hover, .chip:hover { border-color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .card > .head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: none; border: 0; text-align: left; }
+  .num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: grid; place-items: center; font-size: 14px; font-weight: 600; }
+  .head .domain { margin-left: auto; flex: none; }
+  .tag { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+  .body { padding: 0 16px 16px; }
+  .step { border-top: 1px solid var(--line); padding: 16px 0 4px; }
+  .kind { display: inline-block; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-bg); border-radius: 6px; padding: 1px 8px; margin-bottom: 8px; }
+  .file { color: var(--muted); margin-bottom: 6px; word-break: break-all; }
+  pre { margin: 0 0 12px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-x: auto; font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre.diff { padding: 8px 0; }
+  pre.diff span { display: block; padding: 0 12px; white-space: pre; min-width: max-content; }
+  pre.diff .add { background: var(--add); color: var(--add-text); }
+  pre.diff .del { background: var(--del); color: var(--del-text); }
+  pre.diff .hunk { color: var(--muted); }
+  figure { margin: 0 0 12px; }
+  figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+  figure.located img { border: 2px solid var(--mark); }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+  .chip { background: none; border: 1px dashed var(--line); border-radius: 999px; padding: 2px 12px; font-size: 14px; color: var(--muted); }
+  .chip[aria-expanded="true"] { border-style: solid; border-color: var(--accent); color: var(--accent); }
+  .detail { border-left: 3px solid var(--accent-bg); padding-left: 12px; margin-bottom: 12px; }
+  .next { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .primary { background: var(--accent); color: var(--bg); border: 0; border-radius: 8px; padding: 6px 16px; font-weight: 600; }
+  .dots { display: flex; gap: 5px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .dots i.on { background: var(--accent); }
+  .scenario { margin-bottom: 6px; font-size: 15px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById("data").textContent);
+  var LABELS = {
+    changes: "Changes", scenarios: "Scenarios", next: "Next step", nextChange: "Next change", done: "That is everything",
+    showAll: "Show everything", collapse: "Collapse", before: "Before", after: "After",
+    "kind.code": "The code today", "kind.locate": "Where it is in the UI", "kind.diff": "The change",
+    "kind.ui": "How it looks now", "kind.note": "Note"
+  };
+  var custom = data.labels || {};
+  function label(key) { return custom[key] || LABELS[key]; }
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  }
+
+  function diffBlock(diff) {
+    var pre = el("pre", "diff");
+    diff.replace(/\n$/, "").split("\n").forEach(function (line) {
+      var kind = line.indexOf("@@") === 0 ? "hunk" : line[0] === "+" ? "add" : line[0] === "-" ? "del" : "";
+      pre.appendChild(el("span", kind, line || " "));
+    });
+    return pre;
+  }
+
+  function figure(src, caption, className) {
+    var fig = el("figure", className);
+    var img = el("img");
+    img.src = src;
+    img.alt = caption || "";
+    fig.appendChild(img);
+    if (caption) fig.appendChild(el("figcaption", "", caption));
+    return fig;
+  }
+
+  // the parts shared by a step and by one of its details
+  function content(item, located) {
+    var box = document.createDocumentFragment();
+    if (item.text) item.text.split(/\n{2,}/).forEach(function (paragraph) { box.appendChild(el("p", "", paragraph)); });
+    if (item.file) box.appendChild(el("div", "file", item.file));
+    if (item.code) box.appendChild(el("pre", "", item.code));
+    if (item.diff) box.appendChild(diffBlock(item.diff));
+    if (item.image) box.appendChild(figure(item.image, item.caption, located ? "located" : ""));
+    if (item.before || item.after) {
+      var pair = el("div", "pair");
+      if (item.before) pair.appendChild(figure(item.before, label("before")));
+      if (item.after) pair.appendChild(figure(item.after, label("after")));
+      box.appendChild(pair);
+    }
+    return box;
+  }
+
+  function renderStep(step) {
+    var node = el("section", "step");
+    node.appendChild(el("span", "kind", label("kind." + step.kind)));
+    node.appendChild(el("h3", "", step.title));
+    node.appendChild(content(step, step.kind === "locate"));
+
+    var more = step.more || [];
+    if (more.length > 0) {
+      var chips = el("div", "chips");
+      node.appendChild(chips);
+      more.forEach(function (detail) {
+        var chip = el("button", "chip", "+ " + detail.label);
+        var panel = el("div", "detail");
+        chip.type = "button";
+        chip.setAttribute("aria-expanded", "false");
+        panel.hidden = true;
+        panel.appendChild(content(detail, false));
+        chip.addEventListener("click", function () {
+          panel.hidden = !panel.hidden;
+          chip.setAttribute("aria-expanded", String(!panel.hidden));
+        });
+        chips.appendChild(chip);
+        node.appendChild(panel);
+      });
+    }
+    return node;
+  }
+
+  var cards = [];
+
+  function renderChange(change, index) {
+    var card = el("article", "card");
+    var head = el("button", "head");
+    var body = el("div", "body");
+    var steps = el("div");
+    var next = el("div", "next");
+    var button = el("button", "primary");
+    var dots = el("div", "dots");
+    var shown = 0;
+
+    head.type = "button";
+    head.setAttribute("aria-expanded", "false");
+    head.appendChild(el("span", "num", String(index + 1)));
+    head.appendChild(el("h2", "", change.title));
+    if (change.domain) head.appendChild(el("span", "tag domain", change.domain));
+    body.hidden = true;
+    body.appendChild(el("p", "", change.why));
+    body.appendChild(steps);
+    button.type = "button";
+    next.appendChild(button);
+    next.appendChild(dots);
+    body.appendChild(next);
+    change.steps.forEach(function () { dots.appendChild(el("i")); });
+
+    function refresh() {
+      var isLast = shown >= change.steps.length;
+      var hasNextChange = index < data.changes.length - 1;
+      button.textContent = !isLast
+        ? label("next") + " (" + (shown + 1) + "/" + change.steps.length + ")"
+        : hasNextChange ? label("nextChange") + " →" : label("done");
+      button.disabled = isLast && !hasNextChange;
+      Array.prototype.forEach.call(dots.children, function (dot, at) { dot.className = at < shown ? "on" : ""; });
+    }
+
+    function reveal(scroll) {
+      if (shown >= change.steps.length) return;
+      var node = renderStep(change.steps[shown++]);
+      steps.appendChild(node);
+      refresh();
+      if (scroll) node.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function open(scroll) {
+      body.hidden = false;
+      head.setAttribute("aria-expanded", "true");
+      if (shown === 0) reveal(false);
+      if (scroll) card.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    head.addEventListener("click", function () {
+      if (body.hidden) open(false);
+      else {
+        body.hidden = true;
+        head.setAttribute("aria-expanded", "false");
+      }
+    });
+    button.addEventListener("click", function () {
+      if (shown < change.steps.length) reveal(true);
+      else if (cards[index + 1]) cards[index + 1].open(true);
+    });
+
+    card.appendChild(head);
+    card.appendChild(body);
+    refresh();
+    return {
+      node: card,
+      open: open,
+      all: function () {
+        open(false);
+        while (shown < change.steps.length) reveal(false);
+        Array.prototype.forEach.call(card.querySelectorAll(".detail"), function (panel) { panel.hidden = false; });
+        Array.prototype.forEach.call(card.querySelectorAll(".chip"), function (chip) { chip.setAttribute("aria-expanded", "true"); });
+      },
+      close: function () {
+        body.hidden = true;
+        head.setAttribute("aria-expanded", "false");
+      }
+    };
+  }
+
+  var app = document.getElementById("app");
+  document.title = data.title;
+  app.appendChild(el("h1", "", data.title));
+
+  var meta = el("div", "meta");
+  if (data.branch) meta.appendChild(el("code", "", data.branch));
+  if (data.pr && /^https:\/\//.test(data.pr)) {
+    var link = el("a", "", data.pr);
+    link.href = data.pr;
+    meta.appendChild(link);
+  }
+  if (meta.children.length > 0) app.appendChild(meta);
+  app.appendChild(el("p", "", data.summary));
+
+  var scenarios = data.scenarios || [];
+  if (scenarios.length > 0) {
+    var toggle = el("button", "chip", "+ " + label("scenarios") + " (" + scenarios.length + ")");
+    var list = el("div", "detail");
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", "false");
+    list.hidden = true;
+    scenarios.forEach(function (scenario) {
+      var row = el("div", "scenario");
+      row.appendChild(el("span", "tag", scenario.id));
+      row.appendChild(document.createTextNode(" " + scenario.text));
+      list.appendChild(row);
+    });
+    toggle.addEventListener("click", function () {
+      list.hidden = !list.hidden;
+      toggle.setAttribute("aria-expanded", String(!list.hidden));
+    });
+    var chips = el("div", "chips");
+    chips.appendChild(toggle);
+    app.appendChild(chips);
+    app.appendChild(list);
+  }
+
+  var toolbar = el("div", "toolbar");
+  var everything = el("button", "ghost", label("showAll"));
+  var expanded = false;
+  everything.type = "button";
+  toolbar.appendChild(el("span", "muted", label("changes") + " (" + data.changes.length + ")"));
+  toolbar.appendChild(everything);
+  app.appendChild(toolbar);
+
+  data.changes.forEach(function (change, index) {
+    var card = renderChange(change, index);
+    cards.push(card);
+    app.appendChild(card.node);
+  });
+
+  everything.addEventListener("click", function () {
+    expanded = !expanded;
+    cards.forEach(function (card) { expanded ? card.all() : card.close(); });
+    everything.textContent = label(expanded ? "collapse" : "showAll");
+  });
+})();
+</script>
+</body>
+</html>

@@ -31,6 +31,27 @@ export class Rules {
     );
   }
 
+  public async polisher(domain: Domain): Promise<string> {
+    return join(roles.polisher, section(`AGENTS.md of ${domain}`, await this.domains.getAgentsMd(domain)));
+  }
+
+  public async qualityReviewer(domain: Domain): Promise<string> {
+    return join(roles.qualityReviewer, section(`AGENTS.md of ${domain}`, await this.domains.getAgentsMd(domain)), shared.outputFormat);
+  }
+
+  public async performanceReviewer(domain: Domain): Promise<string> {
+    return join(roles.performanceReviewer, section(`AGENTS.md of ${domain}`, await this.domains.getAgentsMd(domain)), shared.outputFormat);
+  }
+
+  public qa(intent: Intent, acceptance: string[]): string {
+    return join(
+      roles.qa,
+      section("intent", JSON.stringify(intent, null, 2)),
+      section("acceptance", acceptance.map((item) => `- ${item}`).join("\n")),
+      shared.outputFormat,
+    );
+  }
+
   public finalReviewer(): string {
     return roles.reviewer;
   }
